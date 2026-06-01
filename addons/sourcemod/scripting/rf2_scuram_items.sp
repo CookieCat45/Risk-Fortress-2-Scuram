@@ -2159,11 +2159,7 @@ void ApplyDotDamage(int client, float damage)
 
 void CleanupDot(int client)
 {
-	if (g_hTimers[client][ForgottenKing] != null)
-    {
-		g_hTimers[client][ForgottenKing] = null;
-    }
-
+	g_hTimers[client][ForgottenKing] = null;
     g_fStoredDOT[client] = 0.0;
     g_fDamagePerTick[client] = 0.0;
 	g_iForgottenKingsTicksLeft[client] = 0;
@@ -2174,7 +2170,6 @@ bool IsValidClient(int client)
 {
 	return client > 0 && client <= MaxClients && IsClientInGame(client);
 }
-
 
 bool IsPlayer(int entity)
 {
