@@ -316,20 +316,10 @@ public void HookPlayerGroundChange(int client)
 
 public void OnClientDisconnect(int client)
 {
-	for (int i = 0; i < view_as<int>(TimerSlotCount); i++)
-	{
-		if (g_hTimers[client][i] != null)
-		{
-			delete (g_hTimers[client][i]);
-			g_hTimers[client][i] = null;
-		}
-	}
-	
 	for (int i = 0; i < MAX_CUSTOM_CONDITIONS; i++)
 	{
 		g_CustomConditions[client][i] = false;
 	}
-	
 	
 	g_fStoredHealing[client] = 0.0;
 	g_fStoredDmgInstant[client] = 0.0;
@@ -338,6 +328,10 @@ public void OnClientDisconnect(int client)
 	g_bHasGroundHook[client] = false;
 	g_fActiveSlow[client] = 1.0;
 	g_bPlayerExploding[client] = false;
+	for (int i = 0; i < view_as<int>(TimerSlotCount); i++)
+	{
+		g_hTimers[client][i] = null;
+	}
 }
 
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
@@ -467,8 +461,10 @@ public void RF2_OnPlayerItemUpdate(int client, int item)
 			if (RF2_GetPlayerItemAmount(client, Item_Marxman) > 0)		//compensate the deviation with marxman
 			{
 				angle -= RF2_GetItemMod(g_iParasight, 3) * RF2_GetPlayerItemAmount(client, Item_Marxman);
-				if (GetEntProp(primary, Prop_Send, "m_iItemDefinitionIndex") == 730)		//if has beggar
+				if (primary > MaxClients && GetEntProp(primary, Prop_Send, "m_iItemDefinitionIndex") == 730)
+				{
 					angle = fmax(3.0, angle);
+				}
 			}
 			
 			for (int i = 0; i < amount; i++)		//replacement for pow function because it doesn't work FUCK YOU
@@ -477,12 +473,12 @@ public void RF2_OnPlayerItemUpdate(int client, int item)
 			}
 		}
 		
-		if (primary > MaxClients && IsValidEntity(primary))
+		if (primary > MaxClients)
 		{
 			TF2Attrib_SetByName(primary, "projectile spread angle penalty", angle);
 			TF2Attrib_SetByName(primary, "spread penalty", spreadPenalty);
 		}
-		if (secondary > MaxClients && IsValidEntity(secondary))
+		if (secondary > MaxClients)
 		{
 			TF2Attrib_SetByName(secondary, "projectile spread angle penalty", angle);
 			TF2Attrib_SetByName(secondary, "spread penalty", spreadPenalty);
@@ -719,17 +715,19 @@ public Action RF2_OnTakeDamage(int victim, int &attacker, int &inflictor, float 
 	if (IsBuilding(victim) && inflictorItem == 0)		// fuck you robro
 	{
 		int buildingOwner = GetEntPropEnt(victim, Prop_Send, "m_hBuilder");
-		
-		if (damage > 0.0 && RF2_GetPlayerItemAmount(buildingOwner, Item_SpiralSallet) > 0)
+		if (IsValidClient(buildingOwner))
 		{
-			damage -= RF2_CalcItemMod(buildingOwner, Item_SpiralSallet, 0);
-			changed = true;
-		}
-		
-		if (damage > 0.0 && RF2_GetPlayerItemAmount(buildingOwner, g_iBattersBracers) > 0)
-		{
-			damage -= RF2_CalcItemMod(buildingOwner, g_iBattersBracers, 0);
-			changed = true;
+			if (damage > 0.0 && RF2_GetPlayerItemAmount(buildingOwner, Item_SpiralSallet) > 0)
+			{
+				damage -= RF2_CalcItemMod(buildingOwner, Item_SpiralSallet, 0);
+				changed = true;
+			}
+			
+			if (damage > 0.0 && RF2_GetPlayerItemAmount(buildingOwner, g_iBattersBracers) > 0)
+			{
+				damage -= RF2_CalcItemMod(buildingOwner, g_iBattersBracers, 0);
+				changed = true;
+			}
 		}
 	}
 	
@@ -2078,7 +2076,6 @@ public Action Timer_ForgottenKingDamage(Handle timer, int client)
 	}
 	
 	g_iForgottenKingsCurrentBleedTicks[client]++;
-
 	return Plugin_Continue;
 }
 
@@ -2086,7 +2083,7 @@ public Action Timer_FireHomingRocket(Handle timer, int client)
 {
 	if (!(client = GetClientOfUserId(client)) || !IsPlayerAlive(client) || !RF2_IsEnabled())
 		return Plugin_Stop;
-
+    
     float damage = RF2_GetItemMod(g_isPeacebreaker, 3);
     float speed = RF2_GetItemMod(g_isPeacebreaker, 4);
     EmitSoundToAll(SND_LAW_FIRE, client, _, _, _, 0.6);
