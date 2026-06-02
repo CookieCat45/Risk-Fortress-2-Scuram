@@ -725,7 +725,7 @@ public Action RF2_OnTakeDamage(int victim, int &attacker, int &inflictor, float 
 			
 			if (damage > 0.0 && RF2_GetPlayerItemAmount(buildingOwner, g_iBattersBracers) > 0)
 			{
-				damage -= RF2_CalcItemMod(buildingOwner, g_iBattersBracers, 0);
+				damage -= RF2_CalcItemMod(buildingOwner, g_iBattersBracers, 1);
 				changed = true;
 			}
 		}
